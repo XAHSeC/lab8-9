@@ -1,0 +1,61 @@
+services:
+  namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    platform: linux/amd64
+    container_name: hdfs_namenode
+    ports:
+      - "9870:9870"
+      - "9000:9000"
+    environment:
+      - CLUSTER_NAME=test-cluster
+    env_file:
+      - ./hadoop.env
+    volumes:
+      - namenode_data:/hadoop/dfs/name
+
+  datanode1:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    platform: linux/amd64
+    container_name: hdfs_datanode1
+    environment:
+      - SERVICE_PRECONDITION=namenode:9870
+    env_file:
+      - ./hadoop.env
+    volumes:
+      - datanode1_data:/hadoop/dfs/data
+    depends_on:
+      - namenode
+
+  datanode2:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    platform: linux/amd64
+    container_name: hdfs_datanode2
+    environment:
+      - SERVICE_PRECONDITION=namenode:9870
+    env_file:
+      - ./hadoop.env
+    volumes:
+      - datanode2_data:/hadoop/dfs/data
+    depends_on:
+      - namenode
+
+  minio:
+    # minio/minio удалён с Docker Hub; используем неизменённое зеркало релиза MinIO
+    image: scnd/minio-mirror:RELEASE.2025-09-07T16-13-09Z
+    platform: linux/amd64
+    container_name: local_s3_minio
+    ports:
+      - "9001:9000"
+      - "9002:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadminpassword
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+
+volumes:
+  namenode_data:
+  datanode1_data:
+  datanode2_data:
+  minio_data:
